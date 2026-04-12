@@ -1,0 +1,48 @@
+name: Sync from Upstream
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: master
+          
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/jo-inc/camofox-browser.git
+          
+      - name: Fetch upstream tags
+        run: git fetch upstream --tags
+        
+      - name: Check for new upstream releases
+        id: check
+        run: |
+          upstream_tag=$(git ls-remote --tags upstream | grep -E 'refs/tags/v[0-9]' | cut -d$'\t' -f2 | sed 's|refs/tags/||' | sort -V | tail -1)
+          current_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          echo "Upstream latest: $upstream_tag"
+          echo "Current: $current_tag"
+          
+          if [ "$upstream_tag" != "$current_tag" ] && [ -n "$upstream_tag" ]; then
+            echo "new_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "new_release=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Sync from upstream
+        if: steps.check.outputs.new_release == 'true'
+        run: |
+          git fetch upstream
+          git merge upstream/master --no-edit
+          
+      - name: Push changes
+        if: steps.check.outputs.new_release == 'true'
+        run: |
+          git push origin master
