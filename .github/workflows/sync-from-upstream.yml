@@ -19,8 +19,13 @@ jobs:
           git remote add upstream https://github.com/jo-inc/camofox-browser.git
           
       - name: Fetch upstream tags
-        run: git fetch upstream --tags
-        
+        run: |
+          git fetch upstream --tags
+          
+      - name: Check if tags need syncing
+        run: |
+          git push origin --tags || true
+          
       - name: Check for new upstream releases
         id: check
         run: |
@@ -46,3 +51,7 @@ jobs:
         if: steps.check.outputs.new_release == 'true'
         run: |
           git push origin master
+          
+      - name: Push tags
+        run: |
+          git push origin --tags
