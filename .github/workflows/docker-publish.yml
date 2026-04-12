@@ -31,8 +31,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=ref,event=tag
-            type=ref,event=release
+            type=ref,event=branch
+            type=sha
             latest
             
       - name: Build and push
