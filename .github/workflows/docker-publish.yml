@@ -17,6 +17,15 @@ jobs:
         with:
           fetch-tags: true
           
+      - name: Fetch Camoufox binaries
+        run: |
+          mkdir -p dist
+          curl -fSL "https://github.com/daijro/camoufox/releases/download/v135.0.1-beta.24/camoufox-135.0.1-beta.24-lin.x86_64.zip" -o dist/camoufox-x86_64.zip
+          curl -fSL "https://github.com/daijro/camoufox/releases/download/v135.0.1-beta.24/camoufox-135.0.1-beta.24-lin.arm64.zip" -o dist/camoufox-aarch64.zip
+          curl -fSL "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux" -o dist/yt-dlp-x86_64
+          curl -fSL "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux_aarch64" -o dist/yt-dlp-aarch64
+          chmod +x dist/yt-dlp-*
+          
       - name: Extract version from git tag
         id: version
         run: |
