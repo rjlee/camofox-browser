@@ -49,8 +49,6 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=ref,event=branch
-            type=sha
             latest
             type=raw,value=${{ steps.version.outputs.version }}
 
