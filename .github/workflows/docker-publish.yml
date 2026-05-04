@@ -12,8 +12,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    
-steps:
+    steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -30,14 +29,13 @@ steps:
           curl -fSL "https://github.com/daijro/camoufox/releases/download/v135.0.1-beta.24/camoufox-135.0.1-beta.24-lin.x86_64.zip" -o dist/camoufox-x86_64.zip
           curl -fSL "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux" -o dist/yt-dlp-x86_64
           chmod +x dist/yt-dlp-x86_64
-          
+           
       - name: Extract version from tag
         id: version
         run: |
-          # GITHUB_REF for tag pushes is refs/tags/vX.Y.Z
           VERSION="${GITHUB_REF#refs/tags/v}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          
+           
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
