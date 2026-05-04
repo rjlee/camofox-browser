@@ -53,7 +53,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             latest
-            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw, value=${{ steps.version.outputs.version }}
 
       - name: Build and push
         uses: docker/build-push-action@v5
