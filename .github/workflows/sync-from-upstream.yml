@@ -50,7 +50,7 @@ jobs:
         if: steps.check.outputs.new_release == 'true'
         run: |
           git fetch upstream
-          git merge upstream/master --no-edit
+          git merge upstream/master --no-edit || (echo "Merge conflict detected" && exit 1)
           
       - name: Push changes
         if: steps.check.outputs.new_release == 'true'
