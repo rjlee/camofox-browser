@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      workflows: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -54,6 +53,15 @@ jobs:
         run: |
           git fetch upstream
           git merge upstream/master --no-edit || (echo "Merge conflict detected" && exit 1)
+          # Remove upstream-only workflow files to avoid permission issues
+          # Keep only our workflow files
+          for f in .github/workflows/*; do
+            fname=$(basename "$f")
+            if [ "$fname" != "docker-publish.yml" ] && [ "$fname" != "sync-from-upstream.yml" ]; then
+              git rm -f "$f" 2>/dev/null || true
+            fi
+          done
+          git commit --amend --no-edit 2>/dev/null || true
           
       - name: Push changes
         if: steps.check.outputs.new_release == 'true'
