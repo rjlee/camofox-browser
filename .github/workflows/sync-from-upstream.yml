@@ -73,5 +73,7 @@ jobs:
         run: |
           upstream_tag="${{ steps.check.outputs.upstream_tag }}"
           echo "Creating release tag: $upstream_tag"
+          # Delete local tag if exists (from failed attempts)
+          git tag -d "$upstream_tag" 2>/dev/null || true
           git tag "$upstream_tag"
           git push origin "$upstream_tag"
