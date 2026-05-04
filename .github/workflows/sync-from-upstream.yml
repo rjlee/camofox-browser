@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: master
-          
+           
       - name: Configure Git
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -23,57 +23,53 @@ jobs:
 
       - name: Add upstream remote
         run: |
-          git remote add upstream https://github.com/jo-inc/camofox-browser.git
-          
-      - name: Fetch upstream tags
+          git remote add upstream https://github.com/jo-inc/camofox-browser.git || true
+           
+      - name: Fetch upstream
         run: |
           git fetch upstream --tags
-          
-      - name: Check if tags need syncing
-        run: |
-          git push origin --tags || true
-          
+           
       - name: Check for new upstream releases
         id: check
         run: |
           upstream_tag=$(git ls-remote --tags upstream | grep -E 'refs/tags/v[0-9]' | cut -d$'\t' -f2 | sed 's|refs/tags/||' | sort -V | tail -1)
           current_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
+           
           echo "Upstream latest: $upstream_tag"
           echo "Current: $current_tag"
-          
+           
           if [ "$upstream_tag" != "$current_tag" ] && [ -n "$upstream_tag" ]; then
             echo "new_release=true" >> $GITHUB_OUTPUT
+            echo "upstream_tag=$upstream_tag" >> $GITHUB_OUTPUT
           else
             echo "new_release=false" >> $GITHUB_OUTPUT
           fi
-          
-      - name: Sync from upstream
+           
+      - name: Sync from upstream (without workflow files)
         if: steps.check.outputs.new_release == 'true'
         run: |
           git fetch upstream
-          # Merge upstream, preferring their version on conflict for most files
-          # But keep our .gitignore and workflow files
+          # Merge upstream, preferring their changes
           git merge upstream/master -X theirs --no-commit --no-ff || true
-          # If conflict in .gitignore, keep our version
-          if git diff --name-only --diff-filter=U | grep -q ".gitignore"; then
-            git checkout --ours .gitignore
-            git add .gitignore
-          fi
-          # Remove upstream workflow files - we maintain our own
-          for f in .github/workflows/*; do
-            fname=$(basename "$f")
-            if [ "$fname" != "docker-publish.yml" ] && [ "$fname" != "sync-from-upstream.yml" ]; then
-              git rm -f "$f" 2>/dev/null || true
-            fi
-          done
-          git commit -m "Sync from upstream (keep our workflows/.gitignore)" || echo "Nothing to commit"
-          
+          # Remove upstream-only workflow files
+          rm -f .github/workflows/ci.yml 2>/dev/null || true
+          rm -f .github/workflows/auto-close-old-reports.yml 2>/dev/null || true
+          # Keep our workflow files
+          git checkout HEAD -- .github/workflows/docker-publish.yml 2>/dev/null || true
+          git checkout HEAD -- .github/workflows/sync-from-upstream.yml 2>/dev/null || true
+          # Commit the merge
+          git add -A
+          git commit -m "Sync from upstream: ${{ steps.check.outputs.upstream_tag }}" || echo "Nothing to commit"
+           
       - name: Push changes
         if: steps.check.outputs.new_release == 'true'
         run: |
           git push origin master
-          
-      - name: Push tags
+           
+      - name: Create and push release tag
+        if: steps.check.outputs.new_release == 'true'
         run: |
-          git push origin --tags
+          upstream_tag="${{ steps.check.outputs.upstream_tag }}"
+          echo "Creating release tag: $upstream_tag"
+          git tag "$upstream_tag"
+          git push origin "$upstream_tag"
