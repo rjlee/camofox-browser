@@ -34,12 +34,13 @@ jobs:
         run: |
           # Get latest tag, strip refs/tags/ and ^{} for annotated tags
           upstream_tag=$(git ls-remote --tags upstream | grep -E 'refs/tags/v[0-9]' | grep -v '\^{}$' | cut -d$'\t' -f2 | sed 's|refs/tags/||' | sort -V | tail -1)
-          current_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          # Get the latest tag on origin (our fork)
+          origin_tag=$(git ls-remote --tags origin | grep -E 'refs/tags/v[0-9]' | grep -v '\^{}$' | cut -d$'\t' -f2 | sed 's|refs/tags/||' | sort -V | tail -1)
            
           echo "Upstream latest: $upstream_tag"
-          echo "Current: $current_tag"
+          echo "Origin latest: $origin_tag"
            
-          if [ "$upstream_tag" != "$current_tag" ] && [ -n "$upstream_tag" ]; then
+          if [ "$upstream_tag" != "$origin_tag" ] && [ -n "$upstream_tag" ]; then
             echo "new_release=true" >> $GITHUB_OUTPUT
             echo "upstream_tag=$upstream_tag" >> $GITHUB_OUTPUT
           else
