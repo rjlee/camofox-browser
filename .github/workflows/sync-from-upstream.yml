@@ -52,16 +52,16 @@ jobs:
         if: steps.check.outputs.new_release == 'true'
         run: |
           git fetch upstream
-          git merge upstream/master --no-edit || (echo "Merge conflict detected" && exit 1)
-          # Remove upstream-only workflow files to avoid permission issues
-          # Keep only our workflow files
+          # Merge but don't commit - we'll selectively merge
+          git merge upstream/master --no-commit --no-ff || (echo "Merge conflict detected" && exit 1)
+          # Remove any upstream workflow files that aren't ours
           for f in .github/workflows/*; do
             fname=$(basename "$f")
             if [ "$fname" != "docker-publish.yml" ] && [ "$fname" != "sync-from-upstream.yml" ]; then
               git rm -f "$f" 2>/dev/null || true
             fi
           done
-          git commit --amend --no-edit 2>/dev/null || true
+          git commit -m "Sync from upstream (excluding upstream workflow files)" || echo "Nothing to commit"
           
       - name: Push changes
         if: steps.check.outputs.new_release == 'true'
