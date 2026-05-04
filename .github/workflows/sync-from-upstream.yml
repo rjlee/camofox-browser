@@ -32,7 +32,8 @@ jobs:
       - name: Check for new upstream releases
         id: check
         run: |
-          upstream_tag=$(git ls-remote --tags upstream | grep -E 'refs/tags/v[0-9]' | cut -d$'\t' -f2 | sed 's|refs/tags/||' | sort -V | tail -1)
+          # Get latest tag, strip refs/tags/ and ^{} for annotated tags
+          upstream_tag=$(git ls-remote --tags upstream | grep -E 'refs/tags/v[0-9]' | grep -v '\^{}$' | cut -d$'\t' -f2 | sed 's|refs/tags/||' | sort -V | tail -1)
           current_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
            
           echo "Upstream latest: $upstream_tag"
