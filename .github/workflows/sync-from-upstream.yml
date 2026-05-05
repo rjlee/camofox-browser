@@ -27,7 +27,8 @@ jobs:
            
       - name: Fetch upstream
         run: |
-          git fetch upstream --tags
+          # Force fetch tags to overwrite existing local tags
+          git fetch upstream --tags -f
            
       - name: Check for new upstream releases
         id: check
