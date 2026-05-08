@@ -52,14 +52,21 @@ jobs:
         if: steps.check.outputs.new_release == 'true'
         run: |
           git fetch upstream
-          # Merge upstream, preferring their changes
-          git merge upstream/master -X theirs --no-commit --no-ff || true
+          # Merge upstream, preferring their changes, abort on conflict
+          git merge upstream/master -X theirs --no-commit --no-ff || git merge --abort
           # Remove upstream-only workflow files
           rm -f .github/workflows/ci.yml 2>/dev/null || true
           rm -f .github/workflows/auto-close-old-reports.yml 2>/dev/null || true
-          # Keep our workflow files
-          git checkout HEAD -- .github/workflows/docker-publish.yml 2>/dev/null || true
-          git checkout HEAD -- .github/workflows/sync-from-upstream.yml 2>/dev/null || true
+          # Keep our workflow files - restore from our branch
+          git checkout master -- .github/workflows/docker-publish.yml 2>/dev/null || true
+          git checkout master -- .github/workflows/sync-from-upstream.yml 2>/dev/null || true
+          # Remove any other workflow files that aren't ours
+          for f in .github/workflows/*; do
+            fname=$(basename "$f")
+            if [ "$fname" != "docker-publish.yml" ] && [ "$fname" != "sync-from-upstream.yml" ]; then
+              git rm -f "$f" 2>/dev/null || true
+            fi
+          done
           # Commit the merge
           git add -A
           git commit -m "Sync from upstream: ${{ steps.check.outputs.upstream_tag }}" || echo "Nothing to commit"
